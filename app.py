@@ -101,9 +101,18 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.markdown("### About")
-    st.markdown("This chatbot uses Google's Gemini 2.5 Flash model to provide intelligent responses.")
-    st.markdown("**Model:** gemini-2.5-flash")
+
+    # About section
+    with st.expander("ℹ️ About"):
+        st.markdown("**AI Model Information**")
+        st.markdown("This chatbot uses Google's Gemini 2.5 Flash model to provide intelligent responses.")
+        st.markdown("**Model:** `gemini-2.5-flash`")
+        st.markdown("")
+        st.markdown("**Features:**")
+        st.markdown("- 🎤 Voice input (Speech-to-Text)")
+        st.markdown("- 🔊 Voice output (Text-to-Speech)")
+        st.markdown("- 🎭 Multiple AI personalities")
+        st.markdown("- 💬 Conversation history")
 
 # Main chat interface
 st.title(f"{current_personality['icon']} {current_personality['name']}")
@@ -116,15 +125,20 @@ for idx, message in enumerate(st.session_state.messages):
 
     # Display audio player for assistant messages (OUTSIDE chat_message container)
     if message["role"] == "assistant" and idx in st.session_state.tts_audio:
-        st.markdown("**🔊 Audio:**")
-        st.audio(st.session_state.tts_audio[idx], format='audio/mp3')
+        st.markdown("---")  # Divider for clarity
+        col1, col2 = st.columns([1, 5])
+        with col1:
+            st.markdown("**🔊 Audio:**")
+        with col2:
+            st.audio(st.session_state.tts_audio[idx], format='audio/mp3')
+        st.markdown("")  # Add spacing
 
 # Voice input section
 st.markdown("### 🎤 Voice Input")
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    st.info("Click the microphone button to record your voice. After transcription, click 'Send Voice Message' or type your own message below.")
+    st.info("💡 **Tip:** Click the microphone button to record your voice. The audio will be automatically transcribed and sent to the AI.")
 
 with col2:
     audio_bytes = audio_recorder(
@@ -226,16 +240,26 @@ if prompt and not st.session_state.processing:
 
             # Generate TTS audio for the new response
             new_idx = len(st.session_state.messages) - 1
-            try:
-                tts = gTTS(text=full_response, lang='en', slow=False)
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio:
-                    tts.save(tmp_audio.name)
-                    tmp_audio_path = tmp_audio.name
-                with open(tmp_audio_path, 'rb') as audio_file:
-                    st.session_state.tts_audio[new_idx] = audio_file.read()
-                os.unlink(tmp_audio_path)
-            except Exception as e:
-                pass  # Silently fail if TTS generation fails
+
+            # Check message length and warn if long
+            if len(full_response) > 500:
+                st.warning("⏳ Long message - audio generation may take a moment...")
+
+            # Truncate extremely long messages for TTS
+            tts_text = full_response[:1000] if len(full_response) > 1000 else full_response
+
+            with st.spinner("🎵 Generating audio..."):
+                try:
+                    tts = gTTS(text=tts_text, lang='en', slow=False)
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio:
+                        tts.save(tmp_audio.name)
+                        tmp_audio_path = tmp_audio.name
+                    with open(tmp_audio_path, 'rb') as audio_file:
+                        st.session_state.tts_audio[new_idx] = audio_file.read()
+                    os.unlink(tmp_audio_path)
+                except Exception as e:
+                    st.error(f"❌ Audio generation failed: {str(e)}. Please try again.")
+                    # Continue even if TTS fails - don't crash the app
 
             # Reset processing flag and rerun to display the audio player
             st.session_state.processing = False
