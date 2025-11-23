@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd comprehensive README documentation\n\n- Installation and setup instructions\n- Usage guide for voice and text input\n- Project structure overview\n- Technical implementation details\n- Troubleshooting guide\n- Security best practices\n- Configuration options\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(streamlit run:*)",
+      "Bash(pip install:*)",
+      "Bash(=2.3.0)",
+      "Bash(python -m pip install:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd text-to-speech (TTS) functionality with audio playback\n\n- Add gtts library for text-to-speech conversion\n- Implement automatic audio generation for AI responses\n- Display audio players below AI messages (outside chat containers)\n- Add session state management for TTS audio storage\n- Implement processing flag to prevent infinite loops\n- Add audio byte tracking to prevent reprocessing\n- Generate audio immediately after AI response\n- Use st.rerun() safely with proper flag management\n\nTechnical improvements:\n- Audio players render outside st.chat_message() containers\n- TTS audio stored in session state to avoid regeneration\n- Processing flag prevents duplicate message handling\n- last_audio_bytes tracking prevents voice input reprocessing\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

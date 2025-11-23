@@ -7,6 +7,7 @@ import speech_recognition as sr
 import io
 import wave
 import tempfile
+from gtts import gTTS
 
 # Load environment variables
 load_dotenv()
@@ -59,6 +60,15 @@ if "personality" not in st.session_state:
 if "voice_text" not in st.session_state:
     st.session_state.voice_text = ""
 
+if "tts_audio" not in st.session_state:
+    st.session_state.tts_audio = {}
+
+if "processing" not in st.session_state:
+    st.session_state.processing = False
+
+if "last_audio_bytes" not in st.session_state:
+    st.session_state.last_audio_bytes = None
+
 # Sidebar
 with st.sidebar:
     st.title("🤖 AI Chatbot")
@@ -100,9 +110,14 @@ st.title(f"{current_personality['icon']} {current_personality['name']}")
 st.markdown("Ask me anything!")
 
 # Display chat messages
-for message in st.session_state.messages:
+for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+
+    # Display audio player for assistant messages (OUTSIDE chat_message container)
+    if message["role"] == "assistant" and idx in st.session_state.tts_audio:
+        st.markdown("**🔊 Audio:**")
+        st.audio(st.session_state.tts_audio[idx], format='audio/mp3')
 
 # Voice input section
 st.markdown("### 🎤 Voice Input")
@@ -120,8 +135,9 @@ with col2:
         icon_size="2x",
     )
 
-# Process audio if recorded
-if audio_bytes:
+# Process audio if recorded (only if it's new audio)
+if audio_bytes and audio_bytes != st.session_state.last_audio_bytes:
+    st.session_state.last_audio_bytes = audio_bytes
     st.audio(audio_bytes, format="audio/wav")
 
     # Convert audio to text
@@ -153,17 +169,19 @@ if audio_bytes:
         st.error(f"Error processing audio: {str(e)}")
 
 # Use voice text if available, otherwise wait for typed input
+prompt = None
 if st.session_state.voice_text:
     prompt = st.session_state.voice_text
-    st.session_state.voice_text = ""  # Clear after using
-elif prompt := st.chat_input("Type your message here...", key="chat_input"):
-    pass  # prompt is already set
-else:
-    prompt = None
+    st.session_state.voice_text = ""  # Clear immediately after reading
+elif text_input := st.chat_input("Type your message here...", key="chat_input"):
+    prompt = text_input
 
 st.markdown("---")
 
-if prompt:
+# Only process new prompts if not currently processing
+if prompt and not st.session_state.processing:
+    st.session_state.processing = True
+
     # Add user message to chat history
     st.session_state.messages.append({"role": "user", "content": prompt})
 
@@ -206,10 +224,28 @@ if prompt:
             # Add assistant response to chat history
             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
+            # Generate TTS audio for the new response
+            new_idx = len(st.session_state.messages) - 1
+            try:
+                tts = gTTS(text=full_response, lang='en', slow=False)
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio:
+                    tts.save(tmp_audio.name)
+                    tmp_audio_path = tmp_audio.name
+                with open(tmp_audio_path, 'rb') as audio_file:
+                    st.session_state.tts_audio[new_idx] = audio_file.read()
+                os.unlink(tmp_audio_path)
+            except Exception as e:
+                pass  # Silently fail if TTS generation fails
+
+            # Reset processing flag and rerun to display the audio player
+            st.session_state.processing = False
+            st.rerun()
+
         except Exception as e:
             error_message = f"Error: {str(e)}"
             message_placeholder.error(error_message)
             st.session_state.messages.append({"role": "assistant", "content": error_message})
+            st.session_state.processing = False
 
 # Footer
 st.markdown("---")
