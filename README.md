@@ -1,11 +1,12 @@
 # Voice AI Assistant - Streamlit Chatbot
 
-A voice-enabled AI chatbot application built with Streamlit and Google Gemini API, featuring speech-to-text capabilities and multiple AI personalities.
+A voice-enabled AI chatbot application built with Streamlit and Google Gemini API, featuring speech-to-text input, text-to-speech output, and multiple AI personalities.
 
 ## Features
 
 - 🤖 **AI-Powered Chat**: Powered by Google Gemini 2.5 Flash model
 - 🎤 **Voice Input**: Record your voice and get automatic speech-to-text conversion
+- 🔊 **Voice Output**: Text-to-speech (TTS) for AI responses with automatic audio generation
 - 🎭 **Multiple Personalities**: Choose from 4 different AI personalities:
   - General Assistant - Versatile helper for various topics
   - Study Buddy - Patient learning companion
@@ -13,7 +14,7 @@ A voice-enabled AI chatbot application built with Streamlit and Google Gemini AP
   - Gaming Helper - Knowledgeable gaming companion
 - 💬 **Chat History**: Maintains conversation context throughout the session
 - ⌨️ **Dual Input**: Support for both voice and text input
-- 🎨 **Clean UI**: User-friendly interface with Streamlit
+- 🎨 **Clean UI**: User-friendly interface with polished layout and helpful feedback
 
 ## Prerequisites
 
@@ -70,7 +71,13 @@ A voice-enabled AI chatbot application built with Streamlit and Google Gemini AP
    - Type your message in the text input box at the bottom
    - Press Enter to send
 
-5. **Switching Personalities**
+5. **Listening to AI Responses**
+   - Audio is automatically generated for each AI response
+   - Audio player appears below each assistant message with a divider
+   - Use browser controls to play, pause, adjust speed, or control volume
+   - Long messages may take a moment to generate audio
+
+6. **Switching Personalities**
    - Use the sidebar to select different AI personalities
    - Chat history will be cleared when switching personalities
 
@@ -93,6 +100,7 @@ voice-ai-assistant/
 - `python-dotenv>=1.0.0` - Environment variable management
 - `audio-recorder-streamlit>=0.0.8` - Audio recording component
 - `SpeechRecognition>=3.10.0` - Speech-to-text conversion
+- `gtts>=2.3.0` - Google Text-to-Speech for audio output
 
 ## Technical Details
 
@@ -107,6 +115,23 @@ The voice input feature uses a two-step process to ensure reliable speech recogn
    - This approach ensures correct sample rate and audio format parsing
 
 **Important Note**: The implementation uses `sr.AudioFile()` instead of `sr.AudioData()` constructor to avoid format compatibility issues.
+
+### Text-to-Speech Implementation
+
+The TTS feature provides automatic audio generation for AI responses:
+
+1. **Automatic Generation**: Every AI response is automatically converted to speech
+2. **Audio Playback**: Audio players are displayed below each AI message with playback controls
+3. **Smart Features**:
+   - Warning alerts for long messages that may take time to process
+   - Automatic truncation for extremely long messages (>1000 characters)
+   - Browser-native playback controls (play, pause, speed adjustment, volume)
+   - Graceful error handling - chat continues even if audio generation fails
+4. **Implementation Details**:
+   - Uses Google Text-to-Speech (gTTS) library
+   - Audio saved as temporary MP3 files
+   - Audio players rendered outside chat message containers for Streamlit compatibility
+   - Anti-loop protections prevent duplicate audio generation
 
 ### AI Model
 
@@ -163,6 +188,24 @@ audio_bytes = audio_recorder(
 - Check that temporary files can be created in your system
 - Ensure Google Speech Recognition API is accessible
 
+### Text-to-Speech Issues
+
+**Problem**: Audio not generating for AI responses
+
+**Solutions**:
+- Check that `gtts` library is properly installed
+- Verify internet connection (gTTS requires online access)
+- Check browser console for any errors
+- Ensure temporary files can be created in your system
+
+**Problem**: Audio playback not working
+
+**Solutions**:
+- Try a different browser (Chrome, Firefox, Edge recommended)
+- Check browser audio/autoplay settings
+- Verify system volume is not muted
+- Try refreshing the page
+
 ### API Issues
 
 **Problem**: API key errors
@@ -199,6 +242,7 @@ This project is for educational purposes.
 - Built with [Streamlit](https://streamlit.io/)
 - Powered by [Google Gemini API](https://ai.google.dev/)
 - Speech recognition by [Google Speech Recognition](https://cloud.google.com/speech-to-text)
+- Text-to-speech by [gTTS (Google Text-to-Speech)](https://github.com/pndurette/gTTS)
 - Audio recording component by [audio-recorder-streamlit](https://github.com/Joooohan/audio-recorder-streamlit)
 
 ## Author
